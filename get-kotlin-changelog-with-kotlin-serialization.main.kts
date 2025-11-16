@@ -45,7 +45,7 @@ data class CustomField(
 )
 
 @Serializable
-data class VersionBundle(
+data class BundleList(
     val values: List<BundleElement>
 )
 
