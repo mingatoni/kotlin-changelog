@@ -1,11 +1,4 @@
-#!/bin/sh
-
-///bin/true <<EOC 2>/dev/null || true
-/*
-EOC
-kotlinc -script -Xplugin="$(dirname $(realpath $(which kotlinc)))/../libexec/lib/kotlinx-serialization-compiler-plugin.jar" "$0" "$@"
-exit $?
-*/
+#!/usr/bin/env -S kotlinc -script -Xplugin="kotlinx-serialization-compiler-plugin.jar" --
 
 @file:Repository("https://repo1.maven.org/maven2")
 @file:DependsOn("io.ktor:ktor-client-core-jvm:2.3.6")
@@ -193,7 +186,7 @@ suspend fun getAllSupportedVersions() : List<String>  {
             emptyList()
         }
     } catch (e: Exception) {
-        println("Error: Failed to connect to $YOUTRACK_BASE_URL, retrieve or parsing data.")
+        println("Error: Failed to connect to $YOUTRACK_BASE_URL$apiPath or retrieve data.")
         emptyList()
     }
 }
