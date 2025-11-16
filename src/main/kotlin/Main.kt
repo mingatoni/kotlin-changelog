@@ -158,10 +158,10 @@ suspend fun getAllSupportedVersions() : List<String>  {
         val client = getHttpClient()
         val apiPath = "/api/admin/projects/KT/customFields/$VERSION_FIELD_ID"
 
-        val fields_to_return = "bundle(values(name))"
+        val fieldsToReturn = "bundle(values(name))"
 
         val response: HttpResponse = client.get("$YOUTRACK_BASE_URL$apiPath") {
-            parameter("fields", fields_to_return)
+            parameter("fields", fieldsToReturn)
         }
         client.close()
 
