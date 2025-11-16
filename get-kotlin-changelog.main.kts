@@ -20,7 +20,6 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-//import io.ktor.serialization.kotlinx.json.json
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.KSerializer
@@ -194,7 +193,7 @@ suspend fun getAllSupportedVersions() : List<String>  {
             emptyList()
         }
     } catch (e: Exception) {
-        println("Error: Failed to connect to $YOUTRACK_BASE_URL$apiPath or retrieve data.")
+        println("Error: Failed to connect to $YOUTRACK_BASE_URL, retrieve or parsing data.")
         emptyList()
     }
 }
