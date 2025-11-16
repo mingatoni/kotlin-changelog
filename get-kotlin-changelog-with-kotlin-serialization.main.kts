@@ -1,11 +1,11 @@
+#!/usr/bin/env -S kotlinc -script -Xplugin="kotlinx-serialization-compiler-plugin.jar" --
+
 @file:Repository("https://repo1.maven.org/maven2")
 @file:DependsOn("io.ktor:ktor-client-core-jvm:2.3.6")
 @file:DependsOn("io.ktor:ktor-client-cio-jvm:2.3.6")
 @file:DependsOn("io.ktor:ktor-client-content-negotiation-jvm:2.3.6")
-@file:DependsOn("io.ktor:ktor-serialization-gson-jvm:2.3.6")
+@file:DependsOn("io.ktor:ktor-serialization-kotlinx-json-jvm:2.3.6")
 
-import com.google.gson.Gson
-import com.google.gson.JsonElement
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
@@ -13,36 +13,51 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import io.ktor.serialization.gson.*
+import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import java.io.File
 import java.nio.charset.Charset
 
+@Serializable
 data class IssueItem(
     val idReadable: String,
     val summary: String,
     val customFields: List<CustomField> // list of all Custom Fields
 )
 
+@Serializable
 data class BundleElement(
     val name: String,
-)
+//    val `$type`: String
+) {
+    companion object
+}
 
+@Serializable
 data class CustomField(
     val name: String,
     val value: JsonElement? // can be an object or array
 )
 
-data class BundleList(
+@Serializable
+data class VersionBundle(
     val values: List<BundleElement>
 )
 
+@Serializable
 data class CustomFieldResponse(
     val bundle: BundleList
 )
 
 val VERSION_FIELD_ID = "123-13373"
 val YOUTRACK_BASE_URL = "https://youtrack.jetbrains.com"
+
+val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
 runBlocking {
     if (args.isEmpty()) {
@@ -91,7 +106,8 @@ suspend fun fetchIssues(version: String): List<IssueItem> {
         client.close()
 
         if (response.status.isSuccess()) {
-            val issues: List<IssueItem> = response.body()
+            val responseBody = response.bodyAsText()
+            val issues: List<IssueItem> = json.decodeFromString(responseBody)
             issues
         } else {
             println("Error: Requesting data returning an error with status code ${response.status}")
@@ -108,28 +124,30 @@ fun getHttpClient(): HttpClient {
     val client = HttpClient(CIO) {
         // install ContentNegotiation for automatic parsing and serialization of JSON
         install(ContentNegotiation) {
-            gson {
-                setPrettyPrinting()
-            }
+            json(Json {
+                ignoreUnknownKeys = true // ignore fields which are not part of data class
+                prettyPrint = true
+                isLenient = true
+            })
         }
     }
     return client
 }
 
 fun groupBySubsystem(issues: List<IssueItem>): Map<String, List<IssueItem>> {
-    val gsonInstance = Gson()
     val map = mutableMapOf<String, MutableList<IssueItem>>()
-        for (issue in issues) {
-            var subsystem = "Uncategorized"
-            val subsystemsField = issue.customFields.find { it.name == "Subsystems" }
-            if (subsystemsField?.value != null) {
-                val subsystemElements = subsystemsField.value.asJsonArray
-                if (!subsystemElements.isEmpty) {
-                    subsystem = gsonInstance.fromJson(subsystemElements.get(0), BundleElement::class.java).name// get only the first subsystem
-                }
+    for (issue in issues) {
+        var subsystem = "Uncategorized"
+        val subsystemsField = issue.customFields.find { it.name == "Subsystems" }
+        if (subsystemsField?.value != null) {
+            val subsystemElements =
+                json.decodeFromJsonElement(ListSerializer(BundleElement.serializer()), subsystemsField.value)
+            if (subsystemElements.isNotEmpty()) {
+                subsystem = subsystemElements[0].name  // get only the first subsystem
             }
-            map.computeIfAbsent(subsystem) { mutableListOf() }.add(issue)
         }
+        map.computeIfAbsent(subsystem) { mutableListOf() }.add(issue)
+    }
     return map.toSortedMap()
 }
 
@@ -171,4 +189,8 @@ suspend fun getAllSupportedVersions() : List<String>  {
         println("Error: Failed to connect to $YOUTRACK_BASE_URL$apiPath or retrieve data.")
         emptyList()
     }
+}
+
+private fun BundleElement.Companion.serializer(): KSerializer<BundleElement> {
+    return BundleElement.serializer()
 }
