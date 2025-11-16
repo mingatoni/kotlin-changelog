@@ -24,7 +24,6 @@ data class IssueItem(
 @Serializable
 data class BundleElement(
     val name: String,
-//    val `$type`: String
 )
 
 @Serializable
@@ -55,11 +54,13 @@ fun main(args: Array<String>)  = runBlocking {
     }
 
     val version = args[0]
-    if (!Regex("""\d+\.\d+\.\d+(-\w+)?""").matches(version)) {
+    // uncomment if you want to use regexp to check the format
+/*    if (!Regex("""\d+\.\d+\.\d+(-\w+)?""").matches(version)) {
         println("Error: Invalid version format. Expected format like 2.3.0 or 2.3.0-Beta1.")
         return@runBlocking
-    }
+    }*/
 
+    // but better to read all possible version values and provide them to the user
     val supportedVersions : List<String> = getAllSupportedVersions()
     if (!supportedVersions.contains(version)) {
         println("Error: Version isn't supported. Accepted versions list: ${supportedVersions.joinToString(", ")}")
@@ -103,7 +104,8 @@ suspend fun fetchIssues(version: String): List<IssueItem> {
             emptyList()
         }
     } catch (e: Exception) {
-        println("Error: Failed to connect to $YOUTRACK_BASE_URL or retrieve data.")
+        println("Error: Failed to connect to $YOUTRACK_BASE_URL, retrieve or process data.")
+        println("Trace stack: ${e.stackTraceToString()}")
         emptyList()
     }
 }
@@ -152,7 +154,6 @@ fun buildMarkdown(version: String, groupedIssues: Map<String, List<IssueItem>>):
     return sb.toString()
 }
 
-
 suspend fun getAllSupportedVersions() : List<String>  {
     return try {
         val client = getHttpClient()
@@ -174,7 +175,8 @@ suspend fun getAllSupportedVersions() : List<String>  {
             emptyList()
         }
     } catch (e: Exception) {
-        println("Error: Failed to connect to $YOUTRACK_BASE_URL or retrieve data.")
+        println("Error: Failed to connect to $YOUTRACK_BASE_URL, retrieve or process data.")
+        println("Trace stack: ${e.stackTraceToString()}")
         emptyList()
     }
 }
