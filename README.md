@@ -1,14 +1,14 @@
 # kotlin-changelog
 generates changelog for specific kotlin release from youtrack data
 
-this project contains three solutions:
+this project contains two solutions:
 1) Kotlin Application Project
-2) Kotlin script based on kotlinx de/serialization
-3) Kotlin script based on gson de/serialization
+2) Kotlin script based on gson de/serialization
 
-As it was my first Kotlin project I've done some exercises with Kotlin.
-You can also generate changelog fo specific kotlin release using all those three options.
-All three solutions accepting as a parameter the kotlin release version for which you want to generate change log: e.g. 2.2.0 or 2.3.0-Beta1
+As it was my first Kotlin project I've tried different ways to solve the exercise.
+You can generate changelog fo specific kotlin release using both options.
+Both solutions accepting as a parameter the kotlin release version for which you want to generate change log: e.g. 2.2.0 or 2.3.0-Beta1
+If you run it without version parameter then you will get list of all possible versions used in the youtrack for Kotlin project.
 
 # How to install and use:
 
@@ -21,13 +21,11 @@ All three solutions accepting as a parameter the kotlin release version for whic
 alternatively you can build kotlin-changelog project first and then run .jar application with java
 e.g. java -jar kotlin-changelog.jar 2.2.0
 
-## Kotlin script based on kotlinx de/serialization
-you can generate the changelog just running kotlin script based on kotlinx de/serialization. In this case you need kotlinc installed on your machine.
-{path_to_the_kotlinc_on_your_machine}/kotlinc -script get-kotlin-changelog-with-kotlin-serialization.main.kts 2.2.0
-
-!!!this solution isn't always working if you will try to execute it from IntelliJ or TeamCity because they are using java to run kotlin compiler. In this case kotlinx serialization plugin sometimes won't be activated
-see open bug: https://youtrack.jetbrains.com/issue/KT-69820
-
-## Kotlin script based on gson de/serialization
-this solution working out-of-the-box from command line, IDE or teamcity build job
+## Kotlin script
+this solution working out-of-the-box from command line, IDE or teamcity build job.
+Just checkout the project and execute the script.
 e.g. kotlinc -script get-kotlin-changelog.main.kts 2.2.0
+
+### Why I didn't use kotlinx-serialization for working with json and used gson instead in the kotlin script
+I tried first to implement the solution using kotlinx-serialization library. But it requieres also kotlinx-serialization plugin.
+I didn't find a proper way to apply the plugin inside of Kotlin script. Sometimes it did work, sometimes it didn't. It seems still to be a open issue according to this youtrack record: https://youtrack.jetbrains.com/issue/KT-69820
